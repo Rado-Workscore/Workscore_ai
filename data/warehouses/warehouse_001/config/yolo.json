@@ -1,0 +1,9 @@
+{
+    "model": "yolov8m.pt",
+    "conf": 0.15,
+    "iou": 0.5,
+    "classes": [0],
+    "imgsz": 960,
+    "device": "cuda"
+  }
+  

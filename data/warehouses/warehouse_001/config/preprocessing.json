@@ -1,0 +1,15 @@
+{
+    "clahe": {
+      "clipLimit": 2.0,
+      "tileGridSize": [8, 8]
+    },
+    "gamma": 1.1,
+    "gaussian_blur": {
+      "kernel": [3, 3]
+    },
+    "resize": {
+      "width": 640,
+      "preserve_aspect": true
+    }
+  }
+  

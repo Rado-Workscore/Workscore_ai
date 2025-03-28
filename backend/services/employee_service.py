@@ -12,7 +12,7 @@ def create_employee(data: EmployeeCreate) -> EmployeeOut:
         position=data.position,
         username=data.username,
         email=data.email,
-        hashed_password=hash_password(data.password)  # ⚠️ hashing դեռ չենք արել
+        hashed_password=hash_password(data.password)  
 
     )
     db.add(new_employee)
