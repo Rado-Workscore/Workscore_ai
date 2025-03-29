@@ -4,5 +4,6 @@
     "max_cosine_distance": 1.0,
     "match_thresh": 0.4,
     "embedding_model": "osnet_x1_0_dukemtmcreid.pt"
+    "device": "cpu"
   }
   

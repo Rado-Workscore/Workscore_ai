@@ -1,56 +1,63 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 import os
 import json
 from processing.tracker.deepsort_wrapper import DeepSortTracker
-from processing.yolo.yolo_runner import run_yolo_on_frames
 
-def run_tracking_on_video(warehouse_id, camera_id, video_id):
-    # ⛓️ Ուղիներ
-    frames_dir = f"data/frames/{warehouse_id}/{camera_id}/{video_id}"
-    cache_dir = f"data/cache/{warehouse_id}/{camera_id}"
-    os.makedirs(cache_dir, exist_ok=True)
+def run_tracking_from_detections(detections_path, frames_dir, warehouse_id, output_path):
+    # 📥 Բեռնում ենք YOLO detect արված տվյալները
+    with open(detections_path, "r") as f:
+        detections = json.load(f)
 
-    # 📥 YOLO detections
-    yolo_results = run_yolo_on_frames(frames_dir)
-
-    # 🔄 Initialize DeepSORT
+    # 🔄 Initialize DeepSORT tracker
     tracker = DeepSortTracker(warehouse_id)
+    all_tracks = []
 
-    all_tracking = []
-
-    for frame_idx, result in enumerate(yolo_results):
-        boxes = result.boxes
-        if boxes is None or boxes.xyxy is None:
-            continue
+    for frame_idx, detection in enumerate(detections):
+        boxes = detection.get("boxes", [])
 
         dets = []
-        for i in range(len(boxes)):
-            xyxy = boxes.xyxy[i].tolist()
-            conf = float(boxes.conf[i])
-            cls = int(boxes.cls[i])
+        for box in boxes:
+            x1, y1, x2, y2 = box
+            w, h = x2 - x1, y2 - y1
             dets.append({
-                "bbox": xyxy,
-                "confidence": conf,
-                "class": cls
+                "bbox": [x1, y1, x2, y2],
+                "confidence": 0.9,
+                "class": 0
             })
 
-        # ➕ Tracking
+        # 🧍 Թարմացնում ենք tracking
         tracks = tracker.update_tracks(dets, frame_idx=frame_idx)
 
         for track in tracks:
-            all_tracking.append({
-                "frame": frame_idx,
-                "track_id": track.track_id,
-                "bbox": track.bbox
+            all_tracks.append({
+                "frame": detection["frame"],
+                "track_id": track["track_id"],
+                "bbox": track["bbox"]
             })
 
-    # 💾 Պահել tracking արդյունքը JSON ֆայլում
-    output_path = os.path.join(cache_dir, f"{video_id}_tracking.json")
+    # 💾 Պահում ենք tracking արդյունքը
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
-        json.dump(all_tracking, f, indent=2)
+        json.dump(all_tracks, f, indent=2)
 
-    print(f"✅ Tracking արդյունքը պահվեց՝ {output_path}")
+    print(f"✅ Tracking արդյունքը պահպանվեց՝ {output_path}")
+    unique_ids = set(t["track_id"] for t in all_tracks)
+    print(f"👤 Հետեւվել է {len(unique_ids)} տարբեր track_id։")
 
-    # Հաշվել քանի unique մարդ է track արվել
-    unique_ids = set([track["track_id"] for track in all_tracking])
-    print(f"👤 Հետեւվել է {len(unique_ids)} տարբեր track_id (մարդու)։")
 
+def main():
+    # 🔧 Կոնֆիգուրացիա
+    warehouse_id = "warehouse_001"
+    camera_id = "new_video"
+    video_id = "processed_1"
+
+    detections_path = f"data/cache/{warehouse_id}/{camera_id}/detections.json"
+    frames_dir = f"data/frames/{warehouse_id}/{camera_id}/{video_id}"
+    output_path = f"data/cache/{warehouse_id}/{camera_id}/{video_id}_tracking.json"
+
+    run_tracking_from_detections(detections_path, frames_dir, warehouse_id, output_path)
+
+if __name__ == "__main__":
+    main()
