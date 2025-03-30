@@ -1,17 +1,15 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-import os
 import json
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from processing.tracker.deepsort_wrapper import DeepSortTracker
 
 def run_tracking_from_detections(detections_path, frames_dir, warehouse_id, output_path):
-    # 📥 Բեռնում ենք YOLO detect արված տվյալները
     with open(detections_path, "r") as f:
         detections = json.load(f)
 
-    # 🔄 Initialize DeepSORT tracker
-    tracker = DeepSortTracker(warehouse_id)
+    # ✅ Փոխանցում ենք frames_dir
+    tracker = DeepSortTracker(warehouse_id, frames_dir)
     all_tracks = []
 
     for frame_idx, detection in enumerate(detections):
@@ -27,8 +25,8 @@ def run_tracking_from_detections(detections_path, frames_dir, warehouse_id, outp
                 "class": 0
             })
 
-        # 🧍 Թարմացնում ենք tracking
-        tracks = tracker.update_tracks(dets, frame_idx=frame_idx)
+        # ✅ Անունը փոխանցում ենք tracker-ին, որպեսզի ինքը բեռնի ֆրեյմը
+        tracks = tracker.update_tracks(dets, frame_idx=frame_idx, frame_name=detection["frame"])
 
         for track in tracks:
             all_tracks.append({
@@ -37,7 +35,6 @@ def run_tracking_from_detections(detections_path, frames_dir, warehouse_id, outp
                 "bbox": track["bbox"]
             })
 
-    # 💾 Պահում ենք tracking արդյունքը
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         json.dump(all_tracks, f, indent=2)
@@ -46,10 +43,8 @@ def run_tracking_from_detections(detections_path, frames_dir, warehouse_id, outp
     unique_ids = set(t["track_id"] for t in all_tracks)
     print(f"👤 Հետեւվել է {len(unique_ids)} տարբեր track_id։")
 
-
 def main():
-    # 🔧 Կոնֆիգուրացիա
-    warehouse_id = "warehouse_001"
+    warehouse_id = "warehouse_1"
     camera_id = "new_video"
     video_id = "processed_1"
 
