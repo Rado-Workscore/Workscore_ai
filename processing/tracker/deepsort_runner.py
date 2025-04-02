@@ -44,7 +44,7 @@ def run_tracking_from_detections(detections_path, frames_dir, warehouse_id, outp
     print(f"👤 Հետեւվել է {len(unique_ids)} տարբեր track_id։")
 
 def main():
-    warehouse_id = "warehouse_1"
+    warehouse_id = "warehouse_3"
     camera_id = "new_video"
     video_id = "processed_1"
 
